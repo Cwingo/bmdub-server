@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>bmDub API</title>
+  <link rel="stylesheet" href="/public/style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <h1 class="brand"><span class="brand-accent"></span> bmDub API</h1>
+      <p class="sub">Endpoints powering the bmDub React site.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="routes">
+      <a class="route" href="/parts">
+        <h2>/parts</h2>
+        <p>Returns all parts as <code>{ items: [...] }</code></p>
+      </a>
+
+      <a class="route" href="/parts/1">
+        <h2>/parts/:id</h2>
+        <p>Returns a single part by <code>_id</code></p>
+      </a>
+
+      <a class="route" href="/builds">
+        <h2>/builds</h2>
+        <p>Returns all builds (array)</p>
+      </a>
+
+      <a class="route" href="/builds/g30-540i">
+        <h2>/builds/:id</h2>
+        <p>Returns a single build by <code>id</code></p>
+      </a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <p>© bmDub API</p>
+    </div>
+  </footer>
+</body>
+</html>
