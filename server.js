@@ -9,10 +9,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use("/images", express.static(path.join(__dirname, "images")));
-app.use("/public", express.static(path.join(__dirname, "public")));
 
-// Partd
+app.use(express.static(path.join(__dirname, "public")));
+
+// ------------------ PARTS ------------------
 const parts = {
   items: [
     { _id: 1, name: "Intercooler", brand: "Wagner Tuning", category: "Engine", image: "/images/intercooler.png", price: 749 },
@@ -28,7 +28,7 @@ const parts = {
   ]
 };
 
-//  BUILDS
+// ------------------ BUILDS ------------------
 const builds = [
   {
     id: "g30-540i",
@@ -117,17 +117,19 @@ const builds = [
 ];
 
 // ---------- ROUTES ----------
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
 
 app.get("/parts", (req, res) => res.json(parts));
 app.get("/parts/:id", (req, res) => {
-  const item = parts.items.find(p => String(p._id) === req.params.id);
+  const item = parts.items.find((p) => String(p._id) === req.params.id);
   return item ? res.json(item) : res.status(404).json({ error: "Not found" });
 });
 
 app.get("/builds", (req, res) => res.json(builds));
 app.get("/builds/:id", (req, res) => {
-  const item = builds.find(b => b.id === req.params.id);
+  const item = builds.find((b) => b.id === req.params.id);
   return item ? res.json(item) : res.status(404).json({ error: "Not found" });
 });
 
