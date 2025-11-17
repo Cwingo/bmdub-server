@@ -130,7 +130,7 @@ const buildSchema = Joi.object({
   car: Joi.string().min(2).max(100).required(),
   instagram: Joi.string().min(2).max(50).required(),
   mods: Joi.string().min(5).max(500).required(),
-  image: Joi.string().uri().min(5).max(300).required(),
+  image: Joi.string().uri().min(5).max(300).optional().allow(""),
 });
 
 // ---------- ROUTES ----------
@@ -197,20 +197,25 @@ app.post("/builds", (req, res) => {
   const nextNum = builds.length + 1;
   const newId = `user-${nextNum}`;
 
+  const img =
+  value.image && value.image.trim() !== "" ? value.image.trim() : "";
+
+
   const newBuild = {
     id: newId,
     title: value.car,
     user: value.instagram,
     specs: [value.car],
-    images: [{ src: value.image }],
+    images: img ? [{ src: img }] : [],
     whp: 0,
     sixty130: null,
     createdAt: Date.now(),
     meta: value.mods,
     chips: [],
     tags: [],
-    bg: value.image,
+    bg: img,
   };
+  
 
   builds.push(newBuild);
 
