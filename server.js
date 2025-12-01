@@ -138,7 +138,7 @@ app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html"))
 );
 
-// PARTS
+// ------------------ PARTS ROUTES ------------------
 app.get("/parts", (req, res) => res.json(parts));
 
 app.get("/parts/:id", (req, res) => {
@@ -173,7 +173,50 @@ app.post("/parts", (req, res) => {
   });
 });
 
-// BUILDS
+app.put("/parts/:id", (req, res) => {
+  const index = parts.items.findIndex((p) => String(p._id) === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ ok: false, error: "Not found" });
+  }
+
+  const { error, value } = partSchema.validate(req.body, { abortEarly: false });
+
+  if (error) {
+    return res.status(400).json({
+      ok: false,
+      errors: error.details.map((d) => ({
+        field: d.path[0],
+        message: d.message,
+      })),
+    });
+  }
+
+  const updatedPart = { ...parts.items[index], ...value };
+  parts.items[index] = updatedPart;
+
+  res.status(200).json({
+    ok: true,
+    item: updatedPart,
+  });
+});
+
+app.delete("/parts/:id", (req, res) => {
+  const index = parts.items.findIndex((p) => String(p._id) === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ ok: false, error: "Not found" });
+  }
+
+  const [deleted] = parts.items.splice(index, 1);
+
+  res.status(200).json({
+    ok: true,
+    item: deleted,
+  });
+});
+
+// ------------------ BUILDS ROUTES ------------------
 app.get("/builds", (req, res) => res.json(builds));
 
 app.get("/builds/:id", (req, res) => {
@@ -198,8 +241,7 @@ app.post("/builds", (req, res) => {
   const newId = `user-${nextNum}`;
 
   const img =
-  value.image && value.image.trim() !== "" ? value.image.trim() : "";
-
+    value.image && value.image.trim() !== "" ? value.image.trim() : "";
 
   const newBuild = {
     id: newId,
@@ -215,7 +257,6 @@ app.post("/builds", (req, res) => {
     tags: [],
     bg: img,
   };
-  
 
   builds.push(newBuild);
 
@@ -225,7 +266,62 @@ app.post("/builds", (req, res) => {
   });
 });
 
-//  reset 
+app.put("/builds/:id", (req, res) => {
+  const index = builds.findIndex((b) => b.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ ok: false, error: "Not found" });
+  }
+
+  const { error, value } = buildSchema.validate(req.body, { abortEarly: false });
+
+  if (error) {
+    return res.status(400).json({
+      ok: false,
+      errors: error.details.map((d) => ({
+        field: d.path[0],
+        message: d.message,
+      })),
+    });
+  }
+
+  const img =
+    value.image && value.image.trim() !== "" ? value.image.trim() : "";
+
+  const updatedBuild = {
+    ...builds[index],
+    title: value.car,
+    user: value.instagram,
+    specs: [value.car],
+    images: img ? [{ src: img }] : [],
+    meta: value.mods,
+    bg: img,
+  };
+
+  builds[index] = updatedBuild;
+
+  res.status(200).json({
+    ok: true,
+    item: updatedBuild,
+  });
+});
+
+app.delete("/builds/:id", (req, res) => {
+  const index = builds.findIndex((b) => b.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ ok: false, error: "Not found" });
+  }
+
+  const [deleted] = builds.splice(index, 1);
+
+  res.status(200).json({
+    ok: true,
+    item: deleted,
+  });
+});
+
+// ------------------ DEV RESET ------------------
 app.get("/dev/reset-builds", (req, res) => {
   const keep = builds.filter((b) => !String(b.id).startsWith("user-"));
 
