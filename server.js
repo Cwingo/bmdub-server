@@ -8,15 +8,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// PATHS
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// APP
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// JOI VALIDATION
+// JOI PARTS
 const partValidationSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   brand: Joi.string().min(2).max(100).required(),
@@ -25,16 +27,19 @@ const partValidationSchema = Joi.object({
   price: Joi.number().min(0).required(),
 });
 
+// JOI BUILDS
 const buildValidationSchema = Joi.object({
   car: Joi.string().min(2).max(100).required(),
   instagram: Joi.string().min(2).max(50).required(),
   mods: Joi.string().min(5).max(500).required(),
-  image: Joi.string().min(2).max(300).optional().allow(""),
+  image: Joi.string().min(0).max(300).optional().allow(""),
   whp: Joi.number().min(0).optional(),
   sixty130: Joi.number().min(0).optional(),
+  chips: Joi.array().items(Joi.string()).optional(),
+  tags: Joi.array().items(Joi.string()).optional(),
 });
 
-// MONGOOSE SCHEMAS
+// MONGOOSE PARTS
 const partDbSchema = new mongoose.Schema({
   name: String,
   brand: String,
@@ -45,30 +50,27 @@ const partDbSchema = new mongoose.Schema({
 
 const Part = mongoose.model("Part", partDbSchema);
 
+// MONGOOSE BUILDS
 const buildDbSchema = new mongoose.Schema({
-  title: String,
-  car: String,
-  instagram: String,
-  user: String,
-  mods: String,
-  meta: String,
-  image: String,
-  bg: String,
+  car: { type: String, required: true },
+  instagram: { type: String, required: true },
+  mods: { type: String, required: true },
+  image: { type: String, default: "" },
   whp: { type: Number, default: 0 },
   sixty130: { type: Number, default: null },
-  chips: [String],
-  tags: [String],
+  chips: { type: [String], default: [] },
+  tags: { type: [String], default: [] },
   createdAt: { type: Date, default: Date.now },
 });
 
 const Build = mongoose.model("Build", buildDbSchema);
 
-// HOME ROUTE
+// HOME
 app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html"))
 );
 
-// PARTS ROUTES
+// PARTS GET ALL
 app.get("/parts", async (req, res) => {
   try {
     const items = await Part.find().sort({ _id: 1 });
@@ -78,6 +80,7 @@ app.get("/parts", async (req, res) => {
   }
 });
 
+// PARTS GET ONE
 app.get("/parts/:id", async (req, res) => {
   try {
     const item = await Part.findById(req.params.id);
@@ -88,6 +91,7 @@ app.get("/parts/:id", async (req, res) => {
   }
 });
 
+// PARTS POST
 app.post("/parts", async (req, res) => {
   const { error, value } = partValidationSchema.validate(req.body, {
     abortEarly: false,
@@ -111,6 +115,7 @@ app.post("/parts", async (req, res) => {
   }
 });
 
+// PARTS PUT
 app.put("/parts/:id", async (req, res) => {
   const { error, value } = partValidationSchema.validate(req.body, {
     abortEarly: false,
@@ -140,6 +145,7 @@ app.put("/parts/:id", async (req, res) => {
   }
 });
 
+// PARTS DELETE
 app.delete("/parts/:id", async (req, res) => {
   try {
     const deleted = await Part.findByIdAndDelete(req.params.id);
@@ -151,26 +157,25 @@ app.delete("/parts/:id", async (req, res) => {
   }
 });
 
-// BUILDS ROUTES
+// BUILDS GET ALL
 app.get("/builds", async (req, res) => {
   try {
     const docs = await Build.find().sort({ createdAt: -1 });
 
     const builds = docs.map((doc) => ({
       id: doc._id.toString(),
-      title: doc.title || doc.car || "",
-      user: doc.user || doc.instagram || "",
-      specs: [doc.car || doc.title || ""],
+      title: doc.car,
+      user: doc.instagram,
+      specs: [doc.car],
       image: doc.image || "",
       images: doc.image ? [{ src: doc.image }] : [],
       whp: typeof doc.whp === "number" ? doc.whp : 0,
-      sixty130:
-        typeof doc.sixty130 === "number" ? doc.sixty130 : null,
+      sixty130: typeof doc.sixty130 === "number" ? doc.sixty130 : null,
       createdAt: doc.createdAt ? doc.createdAt.getTime() : Date.now(),
-      meta: doc.meta || doc.mods || "",
+      meta: doc.mods,
       chips: Array.isArray(doc.chips) ? doc.chips : [],
       tags: Array.isArray(doc.tags) ? doc.tags : [],
-      bg: doc.bg || doc.image || "",
+      bg: doc.image || "",
     }));
 
     res.json(builds);
@@ -179,6 +184,7 @@ app.get("/builds", async (req, res) => {
   }
 });
 
+// BUILDS GET ONE
 app.get("/builds/:id", async (req, res) => {
   try {
     const doc = await Build.findById(req.params.id);
@@ -186,25 +192,25 @@ app.get("/builds/:id", async (req, res) => {
 
     res.json({
       id: doc._id.toString(),
-      title: doc.title || doc.car || "",
-      user: doc.user || doc.instagram || "",
-      specs: [doc.car || doc.title || ""],
+      title: doc.car,
+      user: doc.instagram,
+      specs: [doc.car],
       image: doc.image || "",
       images: doc.image ? [{ src: doc.image }] : [],
       whp: typeof doc.whp === "number" ? doc.whp : 0,
-      sixty130:
-        typeof doc.sixty130 === "number" ? doc.sixty130 : null,
+      sixty130: typeof doc.sixty130 === "number" ? doc.sixty130 : null,
       createdAt: doc.createdAt ? doc.createdAt.getTime() : Date.now(),
-      meta: doc.meta || doc.mods || "",
+      meta: doc.mods,
       chips: Array.isArray(doc.chips) ? doc.chips : [],
       tags: Array.isArray(doc.tags) ? doc.tags : [],
-      bg: doc.bg || doc.image || "",
+      bg: doc.image || "",
     });
   } catch {
     res.status(400).json({ error: "Invalid ID" });
   }
 });
 
+// BUILDS POST
 app.post("/builds", async (req, res) => {
   const { error, value } = buildValidationSchema.validate(req.body, {
     abortEarly: false,
@@ -227,19 +233,18 @@ app.post("/builds", async (req, res) => {
       ok: true,
       item: {
         id: saved._id.toString(),
-        title: saved.title || saved.car || "",
-        user: saved.user || saved.instagram || "",
-        specs: [saved.car || saved.title || ""],
+        title: saved.car,
+        user: saved.instagram,
+        specs: [saved.car],
         image: saved.image || "",
         images: saved.image ? [{ src: saved.image }] : [],
         whp: typeof saved.whp === "number" ? saved.whp : 0,
-        sixty130:
-          typeof saved.sixty130 === "number" ? saved.sixty130 : null,
+        sixty130: typeof saved.sixty130 === "number" ? saved.sixty130 : null,
         createdAt: saved.createdAt ? saved.createdAt.getTime() : Date.now(),
-        meta: saved.meta || saved.mods || "",
+        meta: saved.mods,
         chips: Array.isArray(saved.chips) ? saved.chips : [],
         tags: Array.isArray(saved.tags) ? saved.tags : [],
-        bg: saved.bg || saved.image || "",
+        bg: saved.image || "",
       },
     });
   } catch {
@@ -247,6 +252,7 @@ app.post("/builds", async (req, res) => {
   }
 });
 
+// BUILDS PUT
 app.put("/builds/:id", async (req, res) => {
   const { error, value } = buildValidationSchema.validate(req.body, {
     abortEarly: false,
@@ -274,23 +280,20 @@ app.put("/builds/:id", async (req, res) => {
       ok: true,
       item: {
         id: updated._id.toString(),
-        title: updated.title || updated.car || "",
-        user: updated.user || updated.instagram || "",
-        specs: [updated.car || updated.title || ""],
+        title: updated.car,
+        user: updated.instagram,
+        specs: [updated.car],
         image: updated.image || "",
         images: updated.image ? [{ src: updated.image }] : [],
         whp: typeof updated.whp === "number" ? updated.whp : 0,
-        sixty130:
-          typeof updated.sixty130 === "number"
-            ? updated.sixty130
-            : null,
-        createdAt: updated.createdAt
-          ? updated.createdAt.getTime()
-          : Date.now(),
-        meta: updated.meta || updated.mods || "",
+        sixty130: typeof updated.sixty130 === "number"
+          ? updated.sixty130
+          : null,
+        createdAt: updated.createdAt ? updated.createdAt.getTime() : Date.now(),
+        meta: updated.mods,
         chips: Array.isArray(updated.chips) ? updated.chips : [],
         tags: Array.isArray(updated.tags) ? updated.tags : [],
-        bg: updated.bg || updated.image || "",
+        bg: updated.image || "",
       },
     });
   } catch {
@@ -298,6 +301,7 @@ app.put("/builds/:id", async (req, res) => {
   }
 });
 
+// BUILDS DELETE
 app.delete("/builds/:id", async (req, res) => {
   try {
     const deleted = await Build.findByIdAndDelete(req.params.id);
@@ -307,23 +311,20 @@ app.delete("/builds/:id", async (req, res) => {
       ok: true,
       item: {
         id: deleted._id.toString(),
-        title: deleted.title || deleted.car || "",
-        user: deleted.user || deleted.instagram || "",
-        specs: [deleted.car || deleted.title || ""],
+        title: deleted.car,
+        user: deleted.instagram,
+        specs: [deleted.car],
         image: deleted.image || "",
         images: deleted.image ? [{ src: deleted.image }] : [],
         whp: typeof deleted.whp === "number" ? deleted.whp : 0,
-        sixty130:
-          typeof deleted.sixty130 === "number"
-            ? deleted.sixty130
-            : null,
-        createdAt: deleted.createdAt
-          ? deleted.createdAt.getTime()
-          : Date.now(),
-        meta: deleted.meta || deleted.mods || "",
+        sixty130: typeof deleted.sixty130 === "number"
+          ? deleted.sixty130
+          : null,
+        createdAt: deleted.createdAt ? deleted.createdAt.getTime() : Date.now(),
+        meta: deleted.mods,
         chips: Array.isArray(deleted.chips) ? deleted.chips : [],
         tags: Array.isArray(deleted.tags) ? deleted.tags : [],
-        bg: deleted.bg || deleted.image || "",
+        bg: deleted.image || "",
       },
     });
   } catch {
@@ -331,7 +332,7 @@ app.delete("/builds/:id", async (req, res) => {
   }
 });
 
-// SERVER + MONGO CONNECTION
+// SERVER
 const port = process.env.PORT || 3000;
 
 mongoose
